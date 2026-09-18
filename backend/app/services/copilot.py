@@ -1,3 +1,4 @@
+import re
 from typing import Dict, Any, List
 from app.services.graph_engine import graph_engine
 from app.services.cdr_analyzer import cdr_analyzer
@@ -6,8 +7,7 @@ from app.services.financial_tracker import financial_tracker
 class ForensicCopilotService:
     """
     Law Enforcement AI Forensic Copilot.
-    Interprets natural language queries (English, Hinglish & Hindi),
-    executes Graph & Forensic algorithms, and returns contextualized tactical intelligence.
+    Uses regex word-boundary token matching and multi-entity graph traversal.
     """
 
     def process_investigator_query(self, query_text: str, case_id: str = None) -> Dict[str, Any]:
@@ -21,8 +21,67 @@ class ForensicCopilotService:
         highlighted_edges = []
         suggested_actions = []
 
-        # 1. Greetings & "Who are you?" / "What can you do?"
-        if any(w in q for w in ["who are you", "who r u", "who are u", "what can you do", "introduce yourself", "hello", "hi", "hey", "namaste", "kya kar sakte ho", "help"]):
+        # =========================================================================
+        # 1. KINGPIN & LEADER DETECTION (High Priority)
+        # =========================================================================
+        if any(re.search(rf"\b{w}\b", q) for w in ["kingpin", "leader", "boss", "chief", "mastermind", "head", "main criminal"]):
+            top_k = analytics["kingpin_rankings"][:3]
+            top_names = "\n".join([
+                f"{idx+1}. **{k['name']}** ({k['role']}) — Threat Score: **{k['threat_score']}%** | PageRank: `{k['pagerank']}`"
+                for idx, k in enumerate(top_k)
+            ])
+            highlighted_nodes = [k["id"] for k in top_k]
+            answer = (
+                f"👑 **Syndicate Leadership Identification:**\n\n"
+                f"Based on Graph Centrality (Betweenness + PageRank) and threat lethality metrics, the top identified syndicate leaders are:\n\n"
+                f"{top_names}\n\n"
+                f"**Tactical Assessment:** **Iqbal 'Bhai' Ansari** operates as the supreme remote commander orchestrating finances, while **Vikram Rana** directs ground enforcement and burner communications."
+            )
+            suggested_actions = [
+                "Issue Lookout Circular (LOC) via Bureau of Immigration",
+                "Execute search warrants on Rohini safe houses",
+                "Freeze beneficiary crypto wallets on TRON network"
+            ]
+
+        # =========================================================================
+        # 2. SPECIFIC SUSPECT / ENTITY LOOKUP (Token & Alias Matching)
+        # =========================================================================
+        elif self._match_specific_node(q, nodes):
+            matched = self._match_specific_node(q, nodes)
+            highlighted_nodes = [matched["id"]]
+            
+            # Find all direct connected edges and entities
+            connected = []
+            for e in edges:
+                if e["source"] == matched["id"] or e["target"] == matched["id"]:
+                    other_id = e["target"] if e["source"] == matched["id"] else e["source"]
+                    other_node = next((x for x in nodes if x["id"] == other_id), None)
+                    if other_node:
+                        connected.append(f"- **{e['type']}** ➔ **{other_node['name']}** ({other_node['type']}): {e.get('description', '')}")
+
+            alias_text = f" (Aliases: {', '.join(matched.get('aliases', []))})" if matched.get("aliases") else ""
+            meta_details = "\n".join([f"- **{k.replace('_', ' ').title()}:** {v}" for k, v in matched.get("metadata", {}).items()])
+            
+            answer = (
+                f"🎯 **Suspect Intelligence Dossier: {matched['name']}**{alias_text}\n\n"
+                f"- **Entity ID:** `{matched['id']}`\n"
+                f"- **Designation / Role:** `{matched.get('role', 'Associate')}`\n"
+                f"- **Threat Risk Rating:** **{matched.get('threat_score', 50)}%** ({'CRITICAL' if matched.get('threat_score', 50) >= 80 else 'HIGH'})\n"
+                f"- **Network Centrality:** PageRank `{matched.get('pagerank', 0.0)}` | Betweenness Centrality `{matched.get('betweenness', 0.0)}`\n\n"
+                f"### 📋 Forensic Background:\n{meta_details if meta_details else '- Active target under electronic surveillance.'}\n\n"
+                f"### 🔗 Direct Evidentiary Links ({len(connected)}):\n" +
+                ("\n".join(connected[:5]) if connected else "- No direct outward links recorded.")
+            )
+            suggested_actions = [
+                f"Trace shortest path from {matched['name']} to other entities",
+                f"View CDR logs associated with {matched['name']}",
+                "Export Court-Admissible Case Dossier"
+            ]
+
+        # =========================================================================
+        # 3. GREETINGS & INTRODUCTIONS (Word Boundary Safe)
+        # =========================================================================
+        elif any(re.search(rf"\b{w}\b", q) for w in ["who are you", "who r u", "who are u", "what can you do", "introduce yourself", "hello", "hi", "hey", "namaste", "kya kar sakte ho", "help"]):
             answer = (
                 f"👋 **Namaste Officer! I am your AI Forensic Investigation Copilot** for the **Ministry of Home Affairs (SIH26189)**.\n\n"
                 f"I am connected live to the **Criminal Knowledge Graph**, **CDR Call Telemetry**, and **Hawala Financial Tracker** for `{graph_data.get('case_name')}`.\n\n"
@@ -42,73 +101,15 @@ class ForensicCopilotService:
                 "Analyze burner phone midnight call spikes"
             ]
 
-        # 2. Specific Suspect Query (e.g., "Tell me about Iqbal", "Who is Vikram?", "Rashid details")
-        elif any(n["name"].lower() in q or n["id"].lower() in q or any(al.lower() in q for al in n.get("aliases", [])) for n in nodes):
-            # Find the matched node
-            matched = None
-            for n in nodes:
-                if n["name"].lower() in q or n["id"].lower() in q or any(al.lower() in q for al in n.get("aliases", [])):
-                    matched = n
-                    break
-
-            if matched:
-                highlighted_nodes = [matched["id"]]
-                # Find connected edges
-                connected = []
-                for e in edges:
-                    if e["source"] == matched["id"] or e["target"] == matched["id"]:
-                        other_id = e["target"] if e["source"] == matched["id"] else e["source"]
-                        other_node = next((x for x in nodes if x["id"] == other_id), None)
-                        if other_node:
-                            connected.append(f"- **{e['type']}** ➔ **{other_node['name']}** ({other_node['type']}): {e.get('description', '')}")
-
-                alias_text = f" (Aliases: {', '.join(matched.get('aliases', []))})" if matched.get("aliases") else ""
-                meta_details = "\n".join([f"- **{k.replace('_', ' ').title()}:** {v}" for k, v in matched.get("metadata", {}).items()])
-                
-                answer = (
-                    f"🎯 **Suspect Intelligence Dossier: {matched['name']}**{alias_text}\n\n"
-                    f"- **Entity ID:** `{matched['id']}`\n"
-                    f"- **Designation / Role:** `{matched.get('role', 'Associate')}`\n"
-                    f"- **Threat Risk Rating:** **{matched.get('threat_score', 50)}%** ({'CRITICAL' if matched.get('threat_score', 50) >= 80 else 'HIGH'})\n"
-                    f"- **Network Centrality:** PageRank `{matched.get('pagerank', 0.0)}` | Betweenness `{matched.get('betweenness', 0.0)}`\n\n"
-                    f"### 📋 Forensic Background:\n{meta_details if meta_details else '- Active target under electronic surveillance.'}\n\n"
-                    f"### 🔗 Direct Evidentiary Connections ({len(connected)}):\n" +
-                    ("\n".join(connected[:5]) if connected else "- No direct outward links recorded.")
-                )
-                suggested_actions = [
-                    f"Trace shortest path from {matched['name']} to other entities",
-                    "Issue Lookout Circular (LOC)",
-                    "Subpoena call records and bank statements"
-                ]
-
-        # 3. Kingpin / Boss / Leader query
-        elif any(w in q for w in ["kingpin", "leader", "boss", "chief", "mastermind", "head", "kaun hai boss", "main criminal"]):
-            top_k = analytics["kingpin_rankings"][:3]
-            top_names = "\n".join([f"{idx+1}. **{k['name']}** ({k['role']}) — Threat Score: **{k['threat_score']}%** | PageRank: `{k['pagerank']}`" for idx, k in enumerate(top_k)])
-            highlighted_nodes = [k["id"] for k in top_k]
-            answer = (
-                f"👑 **Syndicate Leadership Identification:**\n\n"
-                f"Based on Graph Centrality (Betweenness + PageRank) and threat lethality metrics, the top identified syndicate leaders are:\n\n"
-                f"{top_names}\n\n"
-                f"**Tactical Assessment:** **Iqbal 'Bhai' Ansari** operates as the supreme remote commander, while **Vikram Rana** directs ground enforcement and burner logistics."
-            )
-            suggested_actions = [
-                "Issue Lookout Circular (LOC) via Bureau of Immigration",
-                "Execute search warrants on Rohini safe houses",
-                "Freeze beneficiary crypto wallets on TRON network"
-            ]
-
-        # 4. Connection / Path / Link between entities
+        # =========================================================================
+        # 4. PATH TRACING & COVERT LINK PREDICTION
+        # =========================================================================
         elif any(w in q for w in ["connect", "path", "between", "link", "how is", "relation", "rishta", "kya connection"]):
-            found_nodes = []
-            for n in nodes:
-                n_name = n["name"].lower()
-                n_id = n["id"].lower()
-                if any(part in q for part in n_name.split() if len(part) > 2) or n_id in q:
-                    found_nodes.append(n["id"])
+            # Find mentioned nodes
+            found_nodes = self._find_multiple_nodes(q, nodes)
 
             if len(found_nodes) >= 2:
-                path_res = graph_engine.find_shortest_path(found_nodes[0], found_nodes[1])
+                path_res = graph_engine.find_shortest_path(found_nodes[0]["id"], found_nodes[1]["id"])
                 if path_res.get("found"):
                     highlighted_nodes = path_res["path_node_ids"]
                     node_names = [n["name"] for n in path_res["nodes"]]
@@ -123,7 +124,7 @@ class ForensicCopilotService:
                         "Audit transactions along this payment corridor"
                     ]
                 else:
-                    answer = f"No direct or indirect link found between the specified entities in the current evidentiary graph."
+                    answer = f"No direct or indirect link found between {found_nodes[0]['name']} and {found_nodes[1]['name']} in the evidentiary graph."
             else:
                 predicted = graph_engine.predict_covert_links()
                 if predicted:
@@ -137,9 +138,11 @@ class ForensicCopilotService:
                     )
                     suggested_actions = ["Initiate simultaneous phone interception on both targets."]
                 else:
-                    answer = "Graph analysis indicates tightly compartmentalized sub-cells."
+                    answer = "Graph analysis indicates compartmentalized cells."
 
-        # 5. Financial / Mule / Money query
+        # =========================================================================
+        # 5. FINANCIAL & MULE ACCOUNTS
+        # =========================================================================
         elif any(w in q for w in ["money", "bank", "mule", "crypto", "hawala", "funds", "transaction", "paisa", "rupaye"]):
             fin_data = financial_tracker.analyze_transactions()
             mules = fin_data["mule_accounts_detected"]
@@ -149,14 +152,16 @@ class ForensicCopilotService:
                 f"💳 **Financial Intelligence & Mule Funneling Report:**\n\n"
                 f"Total traced volume: **₹{fin_data['total_volume_inr']:,.0f}**.\n\n"
                 f"**Flagged Mule Accounts:**\n{mule_summary}\n\n"
-                f"**Crypto Exit Flow:** ₹3.2 Crores converted into USDT on TRON TRC-20 wallet `TJa7...9kx` via P2P OTC brokers."
+                f"**Crypto Exit Flow:** ₹3.2 Crores converted into USDT on TRON TRC-20 wallet `TJa7...9kx` via P2P OTC brokers in Chandni Chowk."
             )
             suggested_actions = [
                 "Issue Section 102 CrPC notice to HDFC and SBI compliance officers",
                 "Report TRC-20 wallet to FIU-India and Binance Law Enforcement portal"
             ]
 
-        # 6. CDR / Call / Phone / Burner query
+        # =========================================================================
+        # 6. CDR & CALL INTERCEPTS
+        # =========================================================================
         elif any(w in q for w in ["call", "cdr", "phone", "burner", "tower", "intercept", "imei", "sim"]):
             cdr_data = cdr_analyzer.analyze_cdr_records()
             top_p = cdr_data["top_calling_pairs"][:2]
@@ -166,14 +171,16 @@ class ForensicCopilotService:
                 f"📞 **CDR & Burner Phone Intelligence:**\n\n"
                 f"Analyzed {cdr_data['total_records_analyzed']} CDR logs across {cdr_data['unique_phone_numbers']} targets.\n\n"
                 f"**Key Nocturnal Communication Spikes (1 AM - 4 AM):**\n{pairs_text}\n\n"
-                f"**Burner Alert:** Single SIM card detected switching between 2 distinct IMEI handsets."
+                f"**Burner Alert:** Single SIM card detected switching between 2 distinct IMEI handsets in Rohini sector."
             )
             suggested_actions = [
                 "Deploy IMSI catcher / active cell tower surveillance",
                 "Request CDR dump for cell tower TOWER-DEL-ROHINI-04"
             ]
 
-        # 7. Default Case Overview
+        # =========================================================================
+        # 7. DEFAULT SUMMARY
+        # =========================================================================
         else:
             top_k = analytics["kingpin_rankings"][0]["name"] if analytics["kingpin_rankings"] else "Target"
             answer = (
@@ -197,5 +204,36 @@ class ForensicCopilotService:
             "confidence_score": 0.98,
             "suggested_actions": suggested_actions
         }
+
+    def _match_specific_node(self, q: str, nodes: List[Dict[str, Any]]) -> Any:
+        """Extracts individual tokens and matches against node names and aliases."""
+        for n in nodes:
+            # Check ID
+            if n["id"].lower() in q:
+                return n
+            # Check Clean Name Words (e.g. Iqbal, Ansari, Vikram, Rana, Rashid, Qureshi, Tariq, Tron, Hdfc)
+            clean_name = re.sub(r"['\"]", "", n["name"].lower())
+            words = [w for w in clean_name.split() if len(w) >= 3 and w not in ["the", "and", "shell", "acc", "hub", "line"]]
+            for w in words:
+                if re.search(rf"\b{re.escape(w)}\b", q):
+                    return n
+            # Check Aliases
+            for al in n.get("aliases", []):
+                clean_al = re.sub(r"['\"]", "", al.lower())
+                al_words = [w for w in clean_al.split() if len(w) >= 3]
+                for w in al_words:
+                    if re.search(rf"\b{re.escape(w)}\b", q):
+                        return n
+        return None
+
+    def _find_multiple_nodes(self, q: str, nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        found = []
+        for n in nodes:
+            clean_name = re.sub(r"['\"]", "", n["name"].lower())
+            words = [w for w in clean_name.split() if len(w) >= 3 and w not in ["the", "and", "shell", "acc", "hub", "line"]]
+            if any(re.search(rf"\b{re.escape(w)}\b", q) for w in words) or n["id"].lower() in q:
+                if n not in found:
+                    found.append(n)
+        return found
 
 copilot_service = ForensicCopilotService()
