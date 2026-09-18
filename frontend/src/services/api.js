@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8000/api/v1`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
