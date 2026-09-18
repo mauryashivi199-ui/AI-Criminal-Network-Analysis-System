@@ -1,25 +1,28 @@
 @echo off
-title KavachNet-AI Launch Controller
+title AI Criminal Network Analysis System Launcher
 color 0b
 
 echo =====================================================================
-echo            KAVACHNET-AI : CRIMINAL NETWORK ANALYSIS SYSTEM
-echo              SIH26189 - MINISTRY OF HOME AFFAIRS (MHA)
+echo       AI-POWERED CRIMINAL NETWORK ANALYSIS SYSTEM (SIH26189)
+echo              MINISTRY OF HOME AFFAIRS (MHA) PLATFORM
 echo =====================================================================
 echo.
-echo [*] Starting FastAPI Graph Intelligence Backend on http://localhost:8000 ...
-start "KavachNet-AI Backend" cmd /k "cd /d %~dp0backend && python run_backend.py"
 
-timeout /t 2 /nobreak >nul
+set BASE_DIR=%~dp0
 
-echo [*] Starting React Tactical Command Center on http://localhost:5173 ...
-start "KavachNet-AI Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
+echo [*] Starting Python FastAPI Backend on http://localhost:8000 ...
+start "KavachNet Backend" cmd /k "cd /d %BASE_DIR%backend && python run_backend.py"
+
+timeout /t 3 /nobreak >nul
+
+echo [*] Starting React Mobile-Responsive Frontend on http://localhost:5173 ...
+start "KavachNet Frontend" cmd /k "cd /d %BASE_DIR%frontend && npm run dev"
 
 echo.
 echo =====================================================================
-echo  KavachNet-AI is launching!
-echo  Backend:   http://localhost:8000  (Docs: http://localhost:8000/docs)
-echo  Frontend:  http://localhost:5173
+echo  System is running!
+echo  Desktop Link: http://localhost:5173
+echo  Phone Link:   http://10.249.4.64:5173
 echo =====================================================================
 echo.
 pause
