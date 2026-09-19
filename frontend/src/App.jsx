@@ -9,6 +9,9 @@ import CrimeMap from './components/GeoSpatial/CrimeMap';
 import CopilotDrawer from './components/Copilot/CopilotDrawer';
 import DossierView from './components/Dossier/DossierView';
 import IngestModal from './components/Ingestion/IngestModal';
+import LoginModal from './components/Auth/LoginModal';
+import SettingsView from './components/Settings/SettingsView';
+import AboutView from './components/About/AboutView';
 import { getGraphData, switchDataset } from './services/api';
 import { Loader2 } from 'lucide-react';
 
@@ -20,6 +23,33 @@ export default function App() {
   const [isIngestOpen, setIsIngestOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
+  
+  // Officer Authentication State
+  const [currentOfficer, setCurrentOfficer] = useState(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  // Load saved officer on initial mount
+  useEffect(() => {
+    const saved = localStorage.getItem('kavachnet_officer');
+    if (saved) {
+      try {
+        setCurrentOfficer(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      // Default to Lead Inspector if not logged in
+      const defaultOfficer = {
+        officer_name: "Inspector Rajesh Kumar",
+        badge_id: "DL-CYBER-8841",
+        agency: "Special Cell / Cyber Crime Unit, Delhi Police",
+        role: "Lead Cyber Crime Investigator",
+        clearance_level: "Level 3 - Top Secret (LEA)"
+      };
+      setCurrentOfficer(defaultOfficer);
+      localStorage.setItem('kavachnet_officer', JSON.stringify(defaultOfficer));
+    }
+  }, []);
 
   // Fetch graph on mount & case change
   const fetchGraph = async (caseKey = currentCase) => {
@@ -53,6 +83,12 @@ export default function App() {
     setActiveTab('graph');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('kavachnet_officer');
+    setCurrentOfficer(null);
+    setIsLoginModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col h-screen w-screen bg-[#070b14] text-slate-100 overflow-hidden font-sans">
       {/* Top Navbar */}
@@ -64,6 +100,10 @@ export default function App() {
         isLive={true}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
+        currentOfficer={currentOfficer}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        onLogout={handleLogout}
+        onNavigateTab={(tab) => setActiveTab(tab)}
       />
 
       {/* Main Content Body */}
@@ -101,6 +141,8 @@ export default function App() {
                 <CopilotDrawer onHighlightNodes={handleHighlightFromCopilot} />
               )}
               {activeTab === 'dossier' && <DossierView />}
+              {activeTab === 'settings' && <SettingsView />}
+              {activeTab === 'about' && <AboutView />}
             </>
           )}
         </main>
@@ -113,6 +155,17 @@ export default function App() {
         onIngestSuccess={() => {
           setIsIngestOpen(false);
           fetchGraph(currentCase);
+        }}
+      />
+
+      {/* Officer Login / Register Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        currentOfficer={currentOfficer}
+        onLoginSuccess={(officer) => {
+          setCurrentOfficer(officer);
+          setIsLoginModalOpen(false);
         }}
       />
     </div>

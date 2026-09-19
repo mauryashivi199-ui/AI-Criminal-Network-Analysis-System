@@ -1,7 +1,9 @@
 from fastapi import APIRouter
-from app.api.endpoints import graph, analytics, ingestion, copilot, geospatial, dossier
+from app.api.endpoints import graph, analytics, ingestion, copilot, geospatial, dossier, auth, settings
 
 api_router = APIRouter()
+api_router.include_router(auth.router, prefix="/auth", tags=["Officer Authentication & Profiles"])
+api_router.include_router(settings.router, prefix="/settings", tags=["System Settings & Compliance"])
 api_router.include_router(graph.router, prefix="/graph", tags=["Graph & Knowledge Base"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["Forensic Analytics"])
 api_router.include_router(ingestion.router, prefix="/ingestion", tags=["Data Ingestion & Extraction"])

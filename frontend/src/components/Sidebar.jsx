@@ -8,6 +8,8 @@ import {
   Bot, 
   FileCheck2, 
   Activity,
+  Settings,
+  Info,
   X
 } from 'lucide-react';
 
@@ -17,7 +19,7 @@ export default function Sidebar({
   isMobileMenuOpen, 
   setIsMobileMenuOpen 
 }) {
-  const navItems = [
+  const mainNavItems = [
     { id: 'graph', label: 'Syndicate Graph', icon: Network, badge: 'Live' },
     { id: 'kingpins', label: 'Kingpin Radar', icon: Crown },
     { id: 'cdr', label: 'CDR & Intercepts', icon: PhoneCall, alert: true },
@@ -25,6 +27,11 @@ export default function Sidebar({
     { id: 'geospatial', label: 'Geo Crime Map', icon: MapPin },
     { id: 'copilot', label: 'AI Forensic Copilot', icon: Bot, highlight: true },
     { id: 'dossier', label: 'Court Case Dossier', icon: FileCheck2 },
+  ];
+
+  const systemNavItems = [
+    { id: 'settings', label: 'Settings & Gateways', icon: Settings },
+    { id: 'about', label: 'About & Standards', icon: Info },
   ];
 
   const handleSelectTab = (id) => {
@@ -50,7 +57,7 @@ export default function Sidebar({
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        <div className="p-3 space-y-1">
+        <div className="p-3 space-y-1 overflow-y-auto">
           {/* Mobile Close Header */}
           <div className="flex md:hidden items-center justify-between pb-2 border-b border-slate-800 mb-2">
             <span className="text-xs font-bold text-slate-300 font-mono">NAVIGATION MENU</span>
@@ -66,7 +73,7 @@ export default function Sidebar({
             Intelligence Modules
           </div>
 
-          {navItems.map((item) => {
+          {mainNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
@@ -97,6 +104,31 @@ export default function Sidebar({
                     AI-RAG
                   </span>
                 )}
+              </button>
+            );
+          })}
+
+          <div className="pt-3 pb-1 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono border-t border-slate-800/80 mt-2">
+            System & Compliance
+          </div>
+
+          {systemNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleSelectTab(item.id)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                  isActive
+                    ? 'bg-blue-600/20 text-cyan-300 border border-blue-500/40 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </div>
               </button>
             );
           })}

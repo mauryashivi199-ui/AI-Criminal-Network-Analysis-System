@@ -72,3 +72,35 @@ export const getGeoHotspots = async () => {
   const res = await apiClient.get('/geospatial/hotspots');
   return res.data;
 };
+
+// Auth & Officer Profile
+export const loginOfficer = async (credentials) => {
+  const res = await apiClient.post('/auth/login', credentials);
+  return res.data;
+};
+
+export const registerOfficer = async (officerData) => {
+  const res = await apiClient.post('/auth/register', officerData);
+  return res.data;
+};
+
+export const getPresetOfficers = async () => {
+  const res = await apiClient.get('/auth/officers');
+  return res.data;
+};
+
+// Settings & Audit Logs
+export const getSystemSettings = async () => {
+  const res = await apiClient.get('/settings');
+  return res.data;
+};
+
+export const updateSystemSettings = async (settings) => {
+  const res = await apiClient.post('/settings/update', settings);
+  return res.data;
+};
+
+export const getAuditLogs = async () => {
+  const res = await apiClient.get('/settings/audit-logs');
+  return res.data;
+};
