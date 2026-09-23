@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import HomePage from './components/Home/HomePage';
 import CytoscapeGraph from './components/GraphView/CytoscapeGraph';
 import KingpinRankings from './components/Analytics/KingpinRankings';
 import CDRMatrix from './components/CDR/CDRMatrix';
@@ -16,7 +17,7 @@ import { getGraphData, switchDataset } from './services/api';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('graph');
+  const [activeTab, setActiveTab] = useState('home');
   const [currentCase, setCurrentCase] = useState('operation_garuda');
   const [graphData, setGraphData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
   
-  // Officer Authentication State
+  // Officer / Google Authentication State
   const [currentOfficer, setCurrentOfficer] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -83,6 +84,24 @@ export default function App() {
     setActiveTab('graph');
   };
 
+  const handleSearchFromHome = (query) => {
+    if (!graphData?.nodes) {
+      setActiveTab('graph');
+      return;
+    }
+    const cleanQ = query.toLowerCase();
+    const matched = graphData.nodes.filter(
+      (n) =>
+        n.name.toLowerCase().includes(cleanQ) ||
+        n.id.toLowerCase().includes(cleanQ) ||
+        (n.aliases && n.aliases.some((a) => a.toLowerCase().includes(cleanQ)))
+    );
+    if (matched.length > 0) {
+      setHighlightedNodes(matched.map((m) => m.id));
+    }
+    setActiveTab('graph');
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('kavachnet_officer');
     setCurrentOfficer(null);
@@ -93,6 +112,8 @@ export default function App() {
     <div className="flex flex-col h-screen w-screen bg-[#070b14] text-slate-100 overflow-hidden font-sans">
       {/* Top Navbar */}
       <Navbar
+        activeTab={activeTab}
+        onNavigateTab={(tab) => setActiveTab(tab)}
         currentCase={currentCase}
         onSwitchCase={handleSwitchCase}
         onOpenIngest={() => setIsIngestOpen(true)}
@@ -103,12 +124,11 @@ export default function App() {
         currentOfficer={currentOfficer}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
-        onNavigateTab={(tab) => setActiveTab(tab)}
       />
 
       {/* Main Content Body */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Responsive Sidebar */}
+        {/* Responsive Sidebar (collapsible / drawer) */}
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -118,7 +138,15 @@ export default function App() {
 
         {/* Dynamic Center Viewport */}
         <main className="flex-1 h-full overflow-hidden relative bg-[#070b14]">
-          {loading && !graphData ? (
+          {activeTab === 'home' && (
+            <HomePage
+              onNavigate={(tab) => setActiveTab(tab)}
+              onSearchSuspect={handleSearchFromHome}
+              onOpenIngest={() => setIsIngestOpen(true)}
+            />
+          )}
+
+          {activeTab !== 'home' && loading && !graphData ? (
             <div className="w-full h-full flex flex-col items-center justify-center space-y-3">
               <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
               <div className="text-xs font-mono text-cyan-300">
@@ -158,7 +186,7 @@ export default function App() {
         }}
       />
 
-      {/* Officer Login / Register Modal */}
+      {/* Officer / Google Login Modal */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
