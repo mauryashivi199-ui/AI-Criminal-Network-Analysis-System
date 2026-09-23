@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Shield, 
   Network, 
@@ -19,11 +19,119 @@ import {
   Zap, 
   FileText,
   Sliders,
-  ExternalLink
+  Send,
+  Loader2,
+  Mic,
+  MicOff,
+  Smartphone,
+  Copy,
+  Check
 } from 'lucide-react';
+import { queryCopilot } from '../../services/api';
 
 export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) {
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Home Embedded AI Bot State
+  const [botMessages, setBotMessages] = useState([
+    {
+      sender: 'ai',
+      text: 'Namaste Officer! I am your **AI Forensic Investigation Assistant**. You can ask me to pinpoint cartel leaders, trace burner phone midnight calls, or look up specific suspects right here from the home terminal.',
+      actions: [
+        'Who is the top kingpin in this syndicate?',
+        'Tell me about Iqbal Ansari',
+        'Show money mule bank accounts',
+        'Analyze burner phone midnight call spikes'
+      ]
+    }
+  ]);
+  const [botInput, setBotInput] = useState('');
+  const [botLoading, setBotLoading] = useState(false);
+  const [isBotRecording, setIsBotRecording] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const botMessagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  const phoneUrl = typeof window !== 'undefined' 
+    ? `http://${window.location.hostname}:5173` 
+    : 'http://10.201.109.64:5173';
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-IN';
+
+        recognition.onstart = () => setIsBotRecording(true);
+        recognition.onresult = (event) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+          }
+          setBotInput(transcript);
+        };
+        recognition.onerror = () => setIsBotRecording(false);
+        recognition.onend = () => setIsBotRecording(false);
+        recognitionRef.current = recognition;
+      }
+    }
+  }, []);
+
+  const toggleBotSpeech = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in this browser. Please use Google Chrome.');
+      return;
+    }
+    if (isBotRecording) {
+      recognitionRef.current.stop();
+      setIsBotRecording(false);
+    } else {
+      recognitionRef.current.start();
+      setIsBotRecording(true);
+    }
+  };
+
+  const handleBotSend = async (queryToSend) => {
+    const q = queryToSend || botInput;
+    if (!q.trim()) return;
+
+    setBotMessages(prev => [...prev, { sender: 'user', text: q }]);
+    if (!queryToSend) setBotInput('');
+    setBotLoading(true);
+
+    try {
+      const res = await queryCopilot(q);
+      setBotMessages(prev => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: res.answer,
+          actions: res.suggested_actions || []
+        }
+      ]);
+    } catch (e) {
+      setBotMessages(prev => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: 'Unable to reach the Forensic Graph Engine. Please ensure the backend is running.',
+          actions: []
+        }
+      ]);
+    } finally {
+      setBotLoading(false);
+    }
+  };
+
+  const copyPhoneLink = () => {
+    navigator.clipboard.writeText(phoneUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 3000);
+  };
 
   const quickSearchTags = [
     "Iqbal Ansari",
@@ -53,7 +161,6 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
       badge: 'LIVE GRAPH',
       badgeColor: 'bg-cyan-950 text-cyan-300 border-cyan-800',
       btnText: 'Launch Graph Engine',
-      glow: 'glow-cyan'
     },
     {
       id: 'kingpins',
@@ -66,7 +173,6 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
       badge: 'PAGERANK AI',
       badgeColor: 'bg-amber-950 text-amber-300 border-amber-800',
       btnText: 'View Kingpin Rankings',
-      glow: 'glow-amber'
     },
     {
       id: 'cdr',
@@ -79,51 +185,18 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
       badge: 'MIDNIGHT SPIKES',
       badgeColor: 'bg-rose-950 text-rose-300 border-rose-800',
       btnText: 'Inspect Call Telemetry',
-      glow: 'glow-rose'
     },
-    {
-      id: 'copilot',
-      title: 'AI Forensic Copilot (Graph-RAG)',
-      subtitle: 'VOICE & MULTI-MODAL INTELLIGENCE',
-      desc: 'Converse with your zero-hallucination investigation assistant using Web Speech voice commands or file attachments with live bidirectional graph sync.',
-      icon: Bot,
-      color: 'from-purple-600/20 via-indigo-600/10 to-transparent',
-      borderColor: 'border-purple-500/40 hover:border-purple-400',
-      badge: 'ZERO HALLUCINATION',
-      badgeColor: 'bg-purple-950 text-purple-300 border-purple-800',
-      btnText: 'Open Copilot Assistant',
-      glow: 'glow-purple'
-    }
-  ];
-
-  const secondaryTools = [
     {
       id: 'financial',
-      title: 'Mule & Hawala Flow',
-      desc: 'Track rapid pass-through bank velocity (>80%) and crypto offramps into TRON TRC-20 wallets.',
+      title: 'Mule & Hawala AML Tracker',
+      subtitle: 'FINANCIAL DE-ANONYMIZATION',
+      desc: 'Track rapid pass-through bank velocity (>80%) and crypto offramps into TRON TRC-20 wallets across inter-state Hawala corridors.',
       icon: Coins,
-      tag: 'AML & Smurfing'
-    },
-    {
-      id: 'geospatial',
-      title: 'Geo Crime Map',
-      desc: 'Pinpoint crime locations, cell tower dumps, and transit hubs on high-resolution GIS maps.',
-      icon: MapPin,
-      tag: 'Cell Tower GIS'
-    },
-    {
-      id: 'dossier',
-      title: 'Court Case Dossier',
-      desc: '1-click court briefs with SHA-256 digital signature hashes compliant with BSA 2023.',
-      icon: FileCheck2,
-      tag: 'BSA 2023 Legal'
-    },
-    {
-      id: 'settings',
-      title: 'Gateway & LEA Settings',
-      desc: 'Configure DoT CEIR Stolen IMEI feeds, CCTNS e-FIR endpoints, and audit ledger policies.',
-      icon: Sliders,
-      tag: 'CEIR & CCTNS'
+      color: 'from-emerald-600/20 via-teal-600/10 to-transparent',
+      borderColor: 'border-emerald-500/40 hover:border-emerald-400',
+      badge: 'CRYPTO OFFRAMP',
+      badgeColor: 'bg-emerald-950 text-emerald-300 border-emerald-800',
+      btnText: 'View Hawala Ledger',
     }
   ];
 
@@ -151,32 +224,41 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
           </span>
         </div>
 
-        <div className="flex items-center space-x-2 text-slate-400 text-[11px]">
-          <span className="font-mono">Threat Response: <b className="text-emerald-400">Real-Time (&lt;1s)</b></span>
+        {/* Mobile Phone Test Link Chip */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={copyPhoneLink}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-blue-950/80 hover:bg-blue-900 border border-blue-700/60 text-cyan-300 text-[11px] font-mono transition"
+            title="Click to copy Mobile phone link"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Phone: {phoneUrl}</span>
+            {copiedLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+          </button>
         </div>
       </div>
 
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-12">
-        {/* Hero Section (Matching Reference Style) */}
-        <div className="text-center space-y-5 max-w-4xl mx-auto">
+      {/* Main Content Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-10 space-y-10">
+        {/* Hero Section with Official Title */}
+        <div className="text-center space-y-4 max-w-4xl mx-auto">
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-950/70 border border-blue-600/40 text-cyan-300 text-xs font-mono font-medium shadow-lg shadow-blue-500/10">
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-spin" />
+            <Sparkles className="w-4 h-4 text-cyan-400" />
             <span>Smart India Hackathon 2026 • Ministry of Home Affairs (SIH26189)</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight font-sans text-white uppercase leading-tight">
-            KAVACHNET AI
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight font-sans text-white uppercase leading-tight">
+            AI-POWERED CRIMINAL NETWORK
             <span className="block mt-1 bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent font-extrabold">
-              Criminal Network Analysis & Forensic Grid
+              ANALYSIS &amp; FORENSIC INTELLIGENCE SYSTEM
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
-            Automating multi-modal crime syndicate de-anonymization. Connect police FIRs, nocturnal CDR bursts, hawala mule velocity, and DoT CEIR stolen IMEIs into interactive, court-admissible Knowledge Graphs.
+          <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            Multi-modal crime syndicate de-anonymization. Connect police FIRs, nocturnal CDR bursts, hawala mule velocity, and DoT CEIR stolen IMEIs into interactive, court-admissible Knowledge Graphs.
           </p>
 
-          {/* Quick Live Search Bar */}
+          {/* Quick Search Bar */}
           <div className="pt-2 max-w-2xl mx-auto">
             <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <div className="absolute left-4 top-3.5 text-cyan-400">
@@ -184,10 +266,10 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
               </div>
               <input
                 type="text"
-                placeholder="Search suspect name (e.g. 'Iqbal Ansari'), phone number, bank account, or IMEI..."
+                placeholder="Search suspect name (e.g. 'Iqbal Ansari'), phone, or bank account..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#0b1224] border border-slate-700/80 rounded-2xl pl-12 pr-32 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-2xl transition"
+                className="w-full bg-[#0b1224] border border-slate-700/80 rounded-2xl pl-12 pr-32 py-3.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 shadow-2xl transition"
               />
               <button
                 type="submit"
@@ -198,7 +280,6 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
               </button>
             </form>
 
-            {/* Quick Filter Suggestion Tags */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
               <span className="text-[11px] text-slate-400 font-mono">Quick Lookup:</span>
               {quickSearchTags.map((tag, idx) => (
@@ -214,7 +295,113 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
           </div>
         </div>
 
-        {/* 4 Core Interactive Quick-Launch Cards */}
+        {/* 🤖 Embedded Live AI Assistant Bot on Home Page */}
+        <div className="rounded-3xl bg-gradient-to-b from-[#0e162c] to-[#0a1020] border border-purple-500/40 p-5 md:p-6 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 border border-purple-400/40">
+                <Bot className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-white font-mono uppercase tracking-wide flex items-center space-x-2">
+                  <span>AI Forensic Investigation Bot (Live Terminal)</span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-800">
+                    GRAPH-RAG
+                  </span>
+                </h3>
+                <p className="text-[11px] text-slate-400">Ask questions with text or Voice Mic 🎙️ directly from the home dashboard.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => onNavigate('copilot')}
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1"
+            >
+              <span>Full Screen Copilot</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Bot Chat Scroll Area */}
+          <div className="max-h-64 overflow-y-auto space-y-3 p-3 bg-slate-950/60 rounded-2xl border border-slate-900 text-xs">
+            {botMessages.map((m, idx) => (
+              <div key={idx} className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-[90%] p-3 rounded-2xl leading-relaxed ${
+                  m.sender === 'user' 
+                    ? 'bg-blue-600 text-white rounded-br-none shadow-md' 
+                    : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-lg'
+                }`}>
+                  <div className="whitespace-pre-wrap">{m.text}</div>
+                  {m.actions && m.actions.length > 0 && (
+                    <div className="mt-2.5 pt-2 border-t border-slate-800/80 space-y-1">
+                      <span className="text-[10px] text-purple-400 font-mono font-bold block">TRY ASKING:</span>
+                      {m.actions.map((act, aIdx) => (
+                        <button
+                          key={aIdx}
+                          onClick={() => handleBotSend(act)}
+                          className="block text-left w-full text-[11px] text-cyan-300 hover:text-cyan-200 bg-slate-950/80 px-2 py-1 rounded border border-slate-800 hover:border-cyan-500/40 transition"
+                        >
+                          ➔ {act}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {botLoading && (
+              <div className="flex items-center space-x-2 text-xs text-purple-400 font-mono p-2 bg-slate-900 rounded-xl max-w-xs border border-slate-800 animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Forensic Graph inference in progress...</span>
+              </div>
+            )}
+            <div ref={botMessagesEndRef} />
+          </div>
+
+          {/* Bot Input Bar */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleBotSend();
+            }}
+            className="flex items-center space-x-2"
+          >
+            <input
+              type="text"
+              placeholder={isBotRecording ? "Listening to your voice..." : "Type query (e.g., 'Who is the kingpin?', 'Tell me about Iqbal Ansari')..."}
+              value={botInput}
+              onChange={(e) => setBotInput(e.target.value)}
+              className={`flex-1 bg-slate-950 border rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 ${
+                isBotRecording ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-800'
+              }`}
+            />
+
+            <button
+              type="button"
+              onClick={toggleBotSpeech}
+              className={`p-2.5 rounded-xl border transition flex-shrink-0 ${
+                isBotRecording 
+                  ? 'bg-rose-600 text-white border-rose-500 animate-pulse' 
+                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-cyan-400'
+              }`}
+              title="Speak query with Mic"
+            >
+              {isBotRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="submit"
+              disabled={botLoading || !botInput.trim()}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 text-white text-xs font-semibold shadow transition flex items-center space-x-1"
+            >
+              <span>Ask AI</span>
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        </div>
+
+        {/* 4 Core Intelligence Cards */}
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
             <div className="flex items-center space-x-2">
@@ -223,7 +410,7 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
                 Primary Intelligence Engines
               </h2>
             </div>
-            <span className="text-xs text-slate-400 font-mono">Click any module to launch</span>
+            <span className="text-xs text-slate-400 font-mono">1-Click Launch</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -272,83 +459,14 @@ export default function HomePage({ onNavigate, onSearchSuspect, onOpenIngest }) 
           </div>
         </div>
 
-        {/* Secondary Specialized Forensic Tools */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2 border-b border-slate-800/80 pb-3">
-            <Shield className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-base sm:text-lg font-bold text-white font-mono uppercase tracking-wider">
-              Specialized Investigation & Compliance Tools
-            </h2>
+        {/* Footer Statistics */}
+        <div className="p-6 rounded-3xl bg-[#0a0f1d] border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-mono">
+          <div className="flex items-center space-x-2">
+            <Shield className="w-4 h-4 text-cyan-400" />
+            <span>AI-POWERED CRIMINAL NETWORK ANALYSIS SYSTEM (SIH26189)</span>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {secondaryTools.map((tool) => {
-              const Icon = tool.icon;
-              return (
-                <div
-                  key={tool.id}
-                  onClick={() => onNavigate(tool.id)}
-                  className="p-5 rounded-2xl bg-[#0a0f1d] border border-slate-800 hover:border-slate-700 hover:bg-slate-900/60 transition cursor-pointer flex flex-col justify-between space-y-3 group shadow-lg"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-cyan-400">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
-                        {tool.tag}
-                      </span>
-                    </div>
-
-                    <h4 className="font-bold text-white text-xs group-hover:text-cyan-300 transition">
-                      {tool.title}
-                    </h4>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      {tool.desc}
-                    </p>
-                  </div>
-
-                  <div className="text-[11px] text-cyan-400 font-semibold flex items-center space-x-1 group-hover:underline">
-                    <span>Open Tool</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Live Case Matrix & Statistics Summary */}
-        <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-r from-blue-950/40 via-[#0b1328] to-[#070b14] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
-          <div className="space-y-2 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start space-x-2 text-cyan-400 font-mono text-xs font-semibold">
-              <Activity className="w-4 h-4 animate-pulse" />
-              <span>ACTIVE OPERATION: OPERATION GARUDA (NARCOTICS & HAWALA CARTEL)</span>
-            </div>
-            <h3 className="text-xl font-bold text-white font-mono">
-              154 Entities Mapped Across 420 Evidentiary Links
-            </h3>
-            <p className="text-xs text-slate-400 max-w-xl">
-              Real-time synchronization between Delhi Police Cyber Crime Special Cell, DoT CEIR, and FIU-India.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={onOpenIngest}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/25 transition flex items-center space-x-2 border border-blue-400/30"
-            >
-              <UploadCloud className="w-4 h-4" />
-              <span>+ Ingest New Case FIR</span>
-            </button>
-
-            <button
-              onClick={() => onNavigate('copilot')}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-300 font-semibold text-xs border border-slate-700 transition flex items-center space-x-2"
-            >
-              <Bot className="w-4 h-4" />
-              <span>Ask Forensic Copilot</span>
-            </button>
+          <div>
+            <span>Ministry of Home Affairs (MHA) • All Rights Reserved</span>
           </div>
         </div>
       </div>

@@ -19,7 +19,8 @@ import {
   FileCheck2,
   Home,
   Radio,
-  Globe
+  Globe,
+  Smartphone
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -51,7 +52,7 @@ export default function Navbar({
 
   return (
     <div className="flex flex-col z-30 select-none sticky top-0">
-      {/* 1. Top Emergency / Intelligence Ticker Bar (Red/Amber Alert Header) */}
+      {/* 1. Top Emergency / Intelligence Ticker Bar */}
       <div className="bg-[#0b0f19] border-b border-slate-800/80 px-3 md:px-6 py-1.5 flex items-center justify-between text-[11px] text-slate-300 font-sans">
         <div className="flex items-center space-x-2 md:space-x-4 truncate">
           <span className="inline-flex items-center space-x-1.5 text-rose-400 font-bold font-mono tracking-wider">
@@ -66,7 +67,7 @@ export default function Navbar({
 
           <span className="hidden md:inline text-slate-500">|</span>
           <span className="hidden md:inline text-slate-300">
-            Emergency Response: <b className="text-white font-mono">112</b>
+            Emergency: <b className="text-white font-mono">112</b>
           </span>
 
           <span className="hidden lg:inline text-slate-500">|</span>
@@ -92,7 +93,7 @@ export default function Navbar({
 
       {/* 2. Main Glassmorphic Top Pill Navbar */}
       <header className="h-16 bg-[#0a0f1d]/95 backdrop-blur-md border-b border-slate-800 px-3 md:px-5 flex items-center justify-between">
-        {/* Brand & Mobile Hamburger */}
+        {/* Official Brand & Mobile Hamburger */}
         <div className="flex items-center space-x-2 md:space-x-3">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -113,7 +114,7 @@ export default function Navbar({
             <div className="truncate">
               <div className="flex items-center space-x-1.5">
                 <span className="font-black tracking-wide text-xs sm:text-sm text-white uppercase font-sans truncate">
-                  KAVACHNET AI
+                  CRIMINAL NETWORK ANALYSIS
                 </span>
                 <span className="hidden sm:inline-block text-[9px] bg-blue-950 text-cyan-300 border border-blue-800 px-1.5 py-0.2 rounded font-mono font-semibold">
                   SIH26189
@@ -266,12 +267,11 @@ export default function Navbar({
               )}
             </div>
           ) : (
-            /* Google Login Button with Official G-Icon (Matching Reference Design) */
+            /* Google Login Button */
             <button
               onClick={onOpenLogin}
               className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs shadow-md transition"
             >
-              {/* Google Official G Logo */}
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
