@@ -20,8 +20,10 @@ import {
   Home,
   Radio,
   Globe,
-  Smartphone
+  MapPin
 } from 'lucide-react';
+import GovtEmblem from './Common/GovtEmblem';
+import { translations } from '../services/translations';
 
 export default function Navbar({ 
   activeTab,
@@ -35,65 +37,76 @@ export default function Navbar({
   setIsMobileMenuOpen,
   currentOfficer,
   onOpenLogin,
-  onLogout
+  onLogout,
+  lang = 'en',
+  setLang
 }) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const t = translations[lang] || translations.en;
 
   const navTabs = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'graph', label: 'Syndicate Graph', icon: Network },
-    { id: 'kingpins', label: 'Kingpin Radar', icon: Crown },
-    { id: 'cdr', label: 'CDR Intercepts', icon: PhoneCall },
-    { id: 'financial', label: 'Hawala AML', icon: Coins },
-    { id: 'copilot', label: 'AI Copilot', icon: Bot, highlight: true },
-    { id: 'dossier', label: 'Court Dossier', icon: FileCheck2 },
+    { id: 'home', label: t.tabs.home, icon: Home },
+    { id: 'graph', label: t.tabs.graph, icon: Network },
+    { id: 'kingpins', label: t.tabs.kingpins, icon: Crown },
+    { id: 'cdr', label: t.tabs.cdr, icon: PhoneCall },
+    { id: 'financial', label: t.tabs.financial, icon: Coins },
+    { id: 'geospatial', label: t.tabs.geospatial, icon: MapPin },
+    { id: 'dossier', label: t.tabs.dossier, icon: FileCheck2 },
+    { id: 'copilot', label: t.tabs.copilot, icon: Bot, highlight: true },
   ];
+
+  const handleLanguageToggle = () => {
+    if (setLang) {
+      setLang(lang === 'en' ? 'hi' : 'en');
+    }
+  };
 
   return (
     <div className="flex flex-col z-30 select-none sticky top-0">
       {/* 1. Top Emergency / Intelligence Ticker Bar */}
       <div className="bg-[#0b0f19] border-b border-slate-800/80 px-3 md:px-6 py-1.5 flex items-center justify-between text-[11px] text-slate-300 font-sans">
         <div className="flex items-center space-x-2 md:space-x-4 truncate">
-          <span className="inline-flex items-center space-x-1.5 text-rose-400 font-bold font-mono tracking-wider">
+          <span className="inline-flex items-center space-x-1.5 text-rose-400 font-bold tracking-wider">
             <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
-            <span className="truncate">24/7 NATIONAL CRIME &amp; INTELLIGENCE GRID</span>
+            <span className="truncate">{t.nationalGrid}</span>
           </span>
 
           <span className="hidden sm:inline text-slate-500">|</span>
           <span className="hidden sm:inline text-slate-300">
-            Cyber Crime Helpline: <b className="text-white font-mono">1930</b>
+            {t.cyberHelpline}: <b className="text-white font-mono">1930</b>
           </span>
 
           <span className="hidden md:inline text-slate-500">|</span>
           <span className="hidden md:inline text-slate-300">
-            Emergency: <b className="text-white font-mono">112</b>
+            {t.emergency}: <b className="text-white font-mono">112</b>
           </span>
 
           <span className="hidden lg:inline text-slate-500">|</span>
           <span className="hidden lg:inline text-slate-300">
-            DoT CEIR Gateway: <b className="text-emerald-400 font-mono">ONLINE</b>
+            {t.ceirOnline}
           </span>
         </div>
 
         <div className="flex items-center space-x-3 flex-shrink-0">
           <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/60 font-mono text-[10px]">
-            BSA 2023 Compliant
+            {t.bsaCompliant}
           </span>
 
+          {/* Functional Real Language Switcher */}
           <button
-            onClick={() => setLanguage(language === 'EN' ? 'हिंदी' : 'EN')}
-            className="flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-750 text-cyan-300 font-mono text-[10px] transition"
+            onClick={handleLanguageToggle}
+            className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-lg bg-blue-950 hover:bg-blue-900 border border-blue-700/70 text-cyan-300 font-bold text-[11px] transition shadow"
+            title="Switch Language / भाषा बदलें"
           >
-            <Globe className="w-3 h-3 text-cyan-400" />
-            <span>{language === 'EN' ? 'हिंदी' : 'English'}</span>
+            <Globe className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{t.langName}</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Main Glassmorphic Top Pill Navbar */}
+      {/* 2. Main Glassmorphic Top Navbar */}
       <header className="h-16 bg-[#0a0f1d]/95 backdrop-blur-md border-b border-slate-800 px-3 md:px-5 flex items-center justify-between">
-        {/* Official Brand & Mobile Hamburger */}
+        {/* Brand & Mobile Hamburger */}
         <div className="flex items-center space-x-2 md:space-x-3">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -107,26 +120,24 @@ export default function Navbar({
             onClick={() => onNavigateTab('home')}
             className="flex items-center space-x-2.5 cursor-pointer group"
           >
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-rose-600 via-indigo-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 border border-cyan-400/40 flex-shrink-0 group-hover:scale-105 transition">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
+            <GovtEmblem className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 group-hover:scale-105 transition" />
             
             <div className="truncate">
               <div className="flex items-center space-x-1.5">
-                <span className="font-black tracking-wide text-xs sm:text-sm text-white uppercase font-sans truncate">
-                  CRIMINAL NETWORK ANALYSIS
+                <span className="font-extrabold tracking-wide text-xs sm:text-sm text-white uppercase font-sans truncate">
+                  {t.brandTitle}
                 </span>
                 <span className="hidden sm:inline-block text-[9px] bg-blue-950 text-cyan-300 border border-blue-800 px-1.5 py-0.2 rounded font-mono font-semibold">
-                  SIH26189
+                  {t.sihBadge}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 truncate">Ministry of Home Affairs (MHA)</p>
+              <p className="text-[10px] text-slate-400 truncate">{t.mhaTag}</p>
             </div>
           </div>
         </div>
 
         {/* Center Pill Navigation Bar (Desktop & Tablet) */}
-        <nav className="hidden lg:flex items-center space-x-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-1 shadow-inner">
+        <nav className="hidden xl:flex items-center space-x-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-1 shadow-inner">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -134,9 +145,9 @@ export default function Navbar({
               <button
                 key={tab.id}
                 onClick={() => onNavigateTab(tab.id)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-md border border-blue-400/30'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md border border-blue-400/30'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`}
               >
@@ -171,10 +182,10 @@ export default function Navbar({
           {/* Ingest FIR Action Button */}
           <button
             onClick={onOpenIngest}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition border border-blue-400/30 flex-shrink-0"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition border border-blue-400/30 flex-shrink-0"
           >
             <UploadCloud className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Ingest FIR</span>
+            <span className="hidden sm:inline">{t.ingestBtn}</span>
           </button>
 
           {/* Google Sign In / Officer Profile Button */}
@@ -227,7 +238,7 @@ export default function Navbar({
                       className="w-full flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition text-left"
                     >
                       <SettingsIcon className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Security &amp; Gateways</span>
+                      <span>{t.tabs.settings}</span>
                     </button>
 
                     <button
@@ -238,7 +249,7 @@ export default function Navbar({
                       className="w-full flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition text-left"
                     >
                       <Info className="w-3.5 h-3.5 text-purple-400" />
-                      <span>About Platform</span>
+                      <span>{t.tabs.about}</span>
                     </button>
 
                     <button
@@ -270,7 +281,7 @@ export default function Navbar({
             /* Google Login Button */
             <button
               onClick={onOpenLogin}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs shadow-md transition"
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-md transition"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -290,7 +301,7 @@ export default function Navbar({
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Login</span>
+              <span>{t.loginBtn}</span>
             </button>
           )}
         </div>

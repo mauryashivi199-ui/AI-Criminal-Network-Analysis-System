@@ -8,6 +8,7 @@ import CDRMatrix from './components/CDR/CDRMatrix';
 import MuleTracker from './components/Financial/MuleTracker';
 import CrimeMap from './components/GeoSpatial/CrimeMap';
 import CopilotDrawer from './components/Copilot/CopilotDrawer';
+import FloatingCopilot from './components/Copilot/FloatingCopilot';
 import DossierView from './components/Dossier/DossierView';
 import IngestModal from './components/Ingestion/IngestModal';
 import LoginModal from './components/Auth/LoginModal';
@@ -24,12 +25,13 @@ export default function App() {
   const [isIngestOpen, setIsIngestOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [highlightedNodes, setHighlightedNodes] = useState([]);
+  const [lang, setLang] = useState('en'); // 'en' | 'hi'
   
   // Officer / Google Authentication State
   const [currentOfficer, setCurrentOfficer] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Load saved officer on initial mount
+  // Load saved officer & language on initial mount
   useEffect(() => {
     const saved = localStorage.getItem('kavachnet_officer');
     if (saved) {
@@ -39,7 +41,6 @@ export default function App() {
         console.error(e);
       }
     } else {
-      // Default to Lead Inspector if not logged in
       const defaultOfficer = {
         officer_name: "Inspector Rajesh Kumar",
         badge_id: "DL-CYBER-8841",
@@ -109,7 +110,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#070b14] text-slate-100 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen w-screen bg-[#070b14] text-slate-100 overflow-hidden font-sans select-none">
       {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -124,16 +125,19 @@ export default function App() {
         currentOfficer={currentOfficer}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
+        lang={lang}
+        setLang={setLang}
       />
 
       {/* Main Content Body */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Responsive Sidebar (collapsible / drawer) */}
+        {/* Responsive Sidebar (collapsible drawer) */}
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}
+          lang={lang}
         />
 
         {/* Dynamic Center Viewport */}
@@ -143,6 +147,7 @@ export default function App() {
               onNavigate={(tab) => setActiveTab(tab)}
               onSearchSuspect={handleSearchFromHome}
               onOpenIngest={() => setIsIngestOpen(true)}
+              lang={lang}
             />
           )}
 
@@ -150,7 +155,7 @@ export default function App() {
             <div className="w-full h-full flex flex-col items-center justify-center space-y-3">
               <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
               <div className="text-xs font-mono text-cyan-300">
-                Synthesizing Multi-Relational Knowledge Graph...
+                {lang === 'hi' ? 'क्रिमिनल नॉलेज ग्राफ का विश्लेषण जारी है...' : 'Synthesizing Multi-Relational Knowledge Graph...'}
               </div>
             </div>
           ) : (
@@ -159,22 +164,30 @@ export default function App() {
                 <CytoscapeGraph
                   graphData={graphData}
                   highlightedNodeIds={highlightedNodes}
+                  lang={lang}
                 />
               )}
-              {activeTab === 'kingpins' && <KingpinRankings />}
-              {activeTab === 'cdr' && <CDRMatrix />}
-              {activeTab === 'financial' && <MuleTracker />}
-              {activeTab === 'geospatial' && <CrimeMap />}
+              {activeTab === 'kingpins' && <KingpinRankings lang={lang} />}
+              {activeTab === 'cdr' && <CDRMatrix lang={lang} />}
+              {activeTab === 'financial' && <MuleTracker lang={lang} />}
+              {activeTab === 'geospatial' && <CrimeMap lang={lang} />}
               {activeTab === 'copilot' && (
-                <CopilotDrawer onHighlightNodes={handleHighlightFromCopilot} />
+                <CopilotDrawer onHighlightNodes={handleHighlightFromCopilot} lang={lang} />
               )}
-              {activeTab === 'dossier' && <DossierView />}
-              {activeTab === 'settings' && <SettingsView />}
-              {activeTab === 'about' && <AboutView />}
+              {activeTab === 'dossier' && <DossierView lang={lang} />}
+              {activeTab === 'settings' && <SettingsView lang={lang} />}
+              {activeTab === 'about' && <AboutView lang={lang} />}
             </>
           )}
         </main>
       </div>
+
+      {/* 🤖 Floating AI Copilot Assistant Widget (Bottom-Right Corner across all pages) */}
+      <FloatingCopilot
+        onHighlightNodes={handleHighlightFromCopilot}
+        onOpenFullScreen={() => setActiveTab('copilot')}
+        lang={lang}
+      />
 
       {/* Ingest FIR Modal */}
       <IngestModal
@@ -184,6 +197,7 @@ export default function App() {
           setIsIngestOpen(false);
           fetchGraph(currentCase);
         }}
+        lang={lang}
       />
 
       {/* Officer / Google Login Modal */}
@@ -195,6 +209,7 @@ export default function App() {
           setCurrentOfficer(officer);
           setIsLoginModalOpen(false);
         }}
+        lang={lang}
       />
     </div>
   );

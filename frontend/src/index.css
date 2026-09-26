@@ -5,12 +5,13 @@
 @layer base {
   body {
     @apply bg-[#070b14] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: Arial, 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 
 code, pre, .font-mono {
-  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 }
 
 /* Custom Scrollbars */
@@ -43,11 +44,14 @@ code, pre, .font-mono {
   box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
 }
 
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(0.99); }
+/* Leaflet Map Styling Fixes */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #0b1120 !important;
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 4s ease-in-out infinite;
+.custom-map-pin {
+  background: transparent;
+  border: none;
 }
