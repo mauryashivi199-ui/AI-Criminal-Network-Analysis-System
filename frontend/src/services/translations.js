@@ -26,7 +26,8 @@ export const translations = {
       copilot: "AI Copilot",
       dossier: "Court Dossier",
       settings: "Settings & Gateways",
-      about: "About Platform"
+      about: "About Platform",
+      help: "Help & Support"
     },
 
     // Home Page
@@ -100,7 +101,8 @@ export const translations = {
       copilot: "एआई कोपायलट",
       dossier: "कोर्ट केस डोजियर",
       settings: "सेटिंग्स व गेटवे",
-      about: "प्लेटफॉर्म विवरण"
+      about: "प्लेटफॉर्म विवरण",
+      help: "सहायता व सपोर्ट"
     },
 
     // Home Page

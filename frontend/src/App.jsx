@@ -14,6 +14,7 @@ import IngestModal from './components/Ingestion/IngestModal';
 import LoginModal from './components/Auth/LoginModal';
 import SettingsView from './components/Settings/SettingsView';
 import AboutView from './components/About/AboutView';
+import HelpView from './components/Help/HelpView';
 import { getGraphData, switchDataset } from './services/api';
 import { Loader2 } from 'lucide-react';
 
@@ -177,6 +178,7 @@ export default function App() {
               {activeTab === 'dossier' && <DossierView lang={lang} />}
               {activeTab === 'settings' && <SettingsView lang={lang} />}
               {activeTab === 'about' && <AboutView lang={lang} />}
+              {activeTab === 'help' && <HelpView lang={lang} />}
             </>
           )}
         </main>

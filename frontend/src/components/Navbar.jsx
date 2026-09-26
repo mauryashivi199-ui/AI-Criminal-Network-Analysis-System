@@ -255,6 +255,17 @@ export default function Navbar({
                     <button
                       onClick={() => {
                         setIsProfileDropdownOpen(false);
+                        onNavigateTab('help');
+                      }}
+                      className="w-full flex items-center space-x-2.5 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition text-left"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{t.tabs.help}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsProfileDropdownOpen(false);
                         onOpenLogin();
                       }}
                       className="w-full flex items-center space-x-2.5 px-3 py-2 text-cyan-300 hover:text-white hover:bg-blue-600/20 rounded-lg transition text-left"

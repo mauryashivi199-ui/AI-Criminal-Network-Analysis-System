@@ -11,6 +11,7 @@ import {
   Activity,
   Settings,
   Info,
+  HelpCircle,
   X
 } from 'lucide-react';
 import { translations } from '../services/translations';
@@ -38,6 +39,7 @@ export default function Sidebar({
   const systemNavItems = [
     { id: 'settings', label: t.tabs.settings, icon: Settings },
     { id: 'about', label: t.tabs.about, icon: Info },
+    { id: 'help', label: t.tabs.help, icon: HelpCircle },
   ];
 
   const handleSelectTab = (id) => {
